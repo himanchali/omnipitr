@@ -535,6 +535,7 @@ sub _load_config_file {
 
             # -x=123 or -x 123
             push @new_args, $1;
+	    push @new_args, $2;
         }
         else {
             croak( "Cannot parse line: $_\n" );
