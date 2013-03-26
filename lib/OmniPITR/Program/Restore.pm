@@ -15,6 +15,9 @@ use Storable;
 use Data::Dumper;
 use Getopt::Long qw( :config no_ignore_case );
 use Cwd;
+use Date::Parse;
+#use OmniPITR::Program;
+
 
 =head1 run()
 
@@ -47,6 +50,21 @@ sub run {
         next if $self->{ 'finish' };
         sleep 1;
         $self->do_some_removal();
+	#Do Check for Config file reload
+	#print $OmniPITR::Program::config_file_name , ":: file name \n";
+        my @file_info  = stat( $OmniPITR::Program::config_file_name );
+        my $file_mtime = $file_info[ 9 ];
+        my $ok_since   = time() - $file_mtime;
+        if ( $ok_since <= 60 ) {
+            if (   ( $self->verbose )
+                && ( !$self->{ 'logged_delay' } ) )
+            {   
+                $self->log->log( 'Exiting as conf file %s got modified (conf file mtime = %u, thrashhold for refresh %u)', $OmniPITR::Program::config_file_name,$file_mtime, $ok_since );
+                $self->{ 'logged_delay' } = 1;
+            }
+            exit (0);
+        }
+
     }
 }
 
@@ -281,6 +299,8 @@ method.
 =cut
 
 sub try_to_restore_and_exit {
+	#print "in try and restore function start\n";
+
     my $self = shift;
 
     if ( $self->{ 'finish' } eq 'immediate' ) {
@@ -303,6 +323,31 @@ sub try_to_restore_and_exit {
         }
         return;
     }
+
+#Adding module for restoring till a particular time stamp
+
+    if (   ( $self->{ 'recovery-till-timestamp' } )
+        && ( !$self->{ 'finish' } ) )
+    {
+        my @file_info  = stat( $wanted_file );
+        my $file_mtime = $file_info[ 9 ];
+	#print "value:",$self->{'recovery-till-timestamp'} ,"\n";
+        my $last_xlog_time = str2time($self->{'recovery-till-timestamp'});
+        my $ok_since   = $last_xlog_time ;
+        if ( $ok_since <= $file_mtime ) {
+            if (   ( $self->verbose )
+                && ( !$self->{ 'logged_delay' } ) )
+            {
+                $self->log->log( 'Segment %s found, but it is newer than timestamp %s (mtime = %u, accepted since %u)', $self->{ 'segment' }, $self->{'recovery-till-timestamp'},$file_mtime, $ok_since );
+                $self->{ 'logged_delay' } = 1;
+            }
+	#print "returning from try and restore \n";
+            return;
+        }
+    }
+
+#-----------
+
 
     if (   ( $self->{ 'recovery-delay' } )
         && ( !$self->{ 'finish' } ) )
@@ -415,6 +460,7 @@ sub read_args_specification {
         'pid-file'            => { 'type' => 's', },
         'pre-removal-processing' => { 'type' => 's', 'aliases' => [ 'h' ], },
         'recovery-delay'         => { 'type' => 'i', 'aliases' => [ 'w' ], },
+        'recovery-till-timestamp'=> { 'type' => 's', 'aliases' => [ 'rtt' ],},
         'removal-pause-trigger'  => { 'type' => 's', 'aliases' => [ 'p' ], },
         'remove-at-a-time'       => { 'type' => 'i', 'aliases' => [ 'rt' ], 'default' => '3', },
         'remove-before'         => { 'aliases' => [ 'rb' ], },
