@@ -51,7 +51,6 @@ sub run {
         sleep 1;
         $self->do_some_removal();
 	#Do Check for Config file reload
-	#print $OmniPITR::Program::config_file_name , ":: file name \n";
         my @file_info  = stat( $OmniPITR::Program::config_file_name );
         my $file_mtime = $file_info[ 9 ];
         my $ok_since   = time() - $file_mtime;
@@ -299,7 +298,6 @@ method.
 =cut
 
 sub try_to_restore_and_exit {
-	#print "in try and restore function start\n";
 
     my $self = shift;
 
@@ -331,7 +329,6 @@ sub try_to_restore_and_exit {
     {
         my @file_info  = stat( $wanted_file );
         my $file_mtime = $file_info[ 9 ];
-	#print "value:",$self->{'recovery-till-timestamp'} ,"\n";
         my $last_xlog_time = str2time($self->{'recovery-till-timestamp'});
         my $ok_since   = $last_xlog_time ;
         if ( $ok_since <= $file_mtime ) {
@@ -341,7 +338,6 @@ sub try_to_restore_and_exit {
                 $self->log->log( 'Segment %s found, but it is newer than timestamp %s (mtime = %u, accepted since %u)', $self->{ 'segment' }, $self->{'recovery-till-timestamp'},$file_mtime, $ok_since );
                 $self->{ 'logged_delay' } = 1;
             }
-	#print "returning from try and restore \n";
             return;
         }
     }
