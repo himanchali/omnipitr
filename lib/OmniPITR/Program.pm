@@ -13,7 +13,7 @@ use File::Spec;
 use Pod::Usage;
 use Carp;
 
-our $VERSION = '1.0.0';
+our $VERSION = '1.1.0';
 
 =head1 new()
 
@@ -534,8 +534,12 @@ sub _load_config_file {
         elsif ( /\A\s*(-[^\s=]*)\s*[\s=]\s*(.*)\z/ ) {
 
             # -x=123 or -x 123
+<<<<<<< HEAD
             push @new_args, $1;
             push @new_args, $2;
+=======
+            push @new_args, $1, $2;
+>>>>>>> 2bd3568e1eaaceb874c2a08d72631b88b8363bc7
         }
         else {
             croak( "Cannot parse line: $_\n" );
